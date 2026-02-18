@@ -30,8 +30,10 @@ const labelMap: Record<string, string> = {
   lotHeld: 'Lot on Hold?',
   comments: 'Additional Comments',
   antimicrobialApplied: 'Antimicrobial Applied?',
-  deviationOccurred: 'Critical Deviation?',
-  correctiveAction: 'Corrective Action Taken',
+  // Plain-language UI adjustment
+  deviationOccurred: 'Temperature Over Allowed Limit?',
+  // Plain-language UI adjustment
+  correctiveAction: 'Action Taken',
   dispositionOfProduct: 'Product Disposition',
   supervisorReviewInitials: 'Supervisor Initials'
 };
@@ -57,12 +59,17 @@ export const PrintableForm: React.FC<Props> = ({ record }) => {
         <h2 className="text-center text-lg font-bold underline py-1">
           {isReceiving ? 'RECEIVING LOG: RAW MATERIALS & INGREDIENTS' : 'RAW INTACT MONITORING LOG (CCP IB)'}
         </h2>
+        {rec.escalation?.isEscalated && (
+          <div className="mt-2 bg-red-100 border border-red-500 text-red-900 text-center py-1 font-black tracking-wide">
+            ESCALATED RECORD
+          </div>
+        )}
       </div>
 
       {/* Main Data Grid */}
       <div className="border-t border-l border-black">
         {Object.entries(record).map(([key, value]) => {
-          if (['id', 'timestamp', 'type'].includes(key)) return null;
+          if (['id', 'timestamp', 'type', 'escalation'].includes(key)) return null;
           const label = labelMap[key] || key;
           
           let displayValue = String(value || 'N/A');
@@ -82,17 +89,39 @@ export const PrintableForm: React.FC<Props> = ({ record }) => {
         })}
       </div>
 
-      {/* Critical Deviation Section (Always shown for Raw Intact Monitoring) */}
+      {rec.escalation?.isEscalated && (
+        <div className="mt-4 border-2 border-red-500">
+          <div className="bg-red-600 text-white p-1 text-center font-bold text-[9pt] uppercase">
+            Escalation Details
+          </div>
+          <div className="p-3 text-[9pt] space-y-2">
+            <p><span className="font-bold">Reason:</span> {rec.escalation.reason}</p>
+            <p><span className="font-bold">User Role:</span> {rec.escalation.userRole}</p>
+            <p><span className="font-bold">Escalation Time:</span> {new Date(rec.escalation.timestamp).toLocaleString()}</p>
+            <div>
+              <p className="font-bold">Missing Fields:</p>
+              <ul className="list-disc ml-6">
+                {(rec.escalation.missingFields || []).map((field: string, idx: number) => (
+                  <li key={`${field}-${idx}`}>{field}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plain-language UI adjustment */}
+      {/* Critical temperature section (Always shown for Raw Intact Monitoring) */}
       {!isReceiving && (
         <div className="mt-4 border-2 border-black">
           <div className="bg-black text-white p-1 text-center font-bold text-[9pt]">
-            CRITICAL LIMIT MONITORING (MAX 45°F)
+            TEMPERATURE LIMIT CHECK (MAX 45°F)
           </div>
           <div className="p-3">
             <div className="flex gap-4 mb-4">
               <div className="flex-1 border border-black p-2">
-                <p className="text-[8pt] font-bold uppercase mb-1">Critical Limit Met?</p>
-                <p className="text-lg font-bold">{rec.temperature <= 45 ? 'YES ✓' : 'NO - DEVIATION'}</p>
+                <p className="text-[8pt] font-bold uppercase mb-1">Within Allowed Limit?</p>
+                <p className="text-lg font-bold">{rec.temperature <= 45 ? 'YES ✓' : 'NO - OVER LIMIT'}</p>
               </div>
               <div className="flex-1 border border-black p-2">
                 <p className="text-[8pt] font-bold uppercase mb-1">Pre-Shipment Review</p>
@@ -105,12 +134,13 @@ export const PrintableForm: React.FC<Props> = ({ record }) => {
             
             {rec.temperature > 45 && (
               <div className="bg-gray-50 border border-dashed border-black p-2">
-                <h3 className="text-red-600 font-black text-sm mb-1 uppercase">★ Regulatory Deviation Flow</h3>
+                {/* Plain-language UI adjustment */}
+                <h3 className="text-red-600 font-black text-sm mb-1 uppercase">★ Temperature Went Over Allowed Limit</h3>
                 <p className="text-[9pt] mb-2 font-serif italic border-b border-gray-200 pb-1">
-                  Corrective Action and Disposition are REQUIRED for audit defensibility.
+                  Action required before product can move forward.
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-[9pt]">
-                  <div><span className="font-bold">Corrective Action:</span> {rec.correctiveAction || '________________'}</div>
+                  <div><span className="font-bold">Action Taken:</span> {rec.correctiveAction || '________________'}</div>
                   <div><span className="font-bold">Disposition:</span> {rec.dispositionOfProduct || '________________'}</div>
                 </div>
               </div>

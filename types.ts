@@ -1,6 +1,14 @@
 
 export type FormType = 'RECEIVING_LOG' | 'RAW_INTACT_MONITORING' | 'NR_RESPONSE';
 
+export interface EscalationMetadata {
+  isEscalated: boolean;
+  reason: string;
+  timestamp: number;
+  userRole: 'Monitor' | 'Supervisor' | 'QA Manager';
+  missingFields: string[];
+}
+
 export interface ReceivingLogEntry {
   id: string;
   type: 'RECEIVING_LOG';
@@ -18,6 +26,7 @@ export interface ReceivingLogEntry {
   carNumber?: string;
   initials: string;
   timestamp: number;
+  escalation?: EscalationMetadata;
 }
 
 export interface RawIntactMonitoringEntry {
@@ -42,6 +51,7 @@ export interface RawIntactMonitoringEntry {
   dispositionOfProduct?: string;
   supervisorReviewInitials?: string;
   timestamp: number;
+  escalation?: EscalationMetadata;
 }
 
 export interface NRExtraction {

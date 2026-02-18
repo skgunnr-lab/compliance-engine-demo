@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { HACCPRecord, ReceivingLogEntry, RawIntactMonitoringEntry } from '../types';
-import { AlertTriangle, CheckCircle, FileText, Printer } from 'lucide-react';
+import { HACCPRecord } from '../types';
+import { AlertTriangle, CheckCircle, Printer } from 'lucide-react';
 
 interface Props {
   record: HACCPRecord;
@@ -26,6 +26,11 @@ export const RecordCard: React.FC<Props> = ({ record, onPrint }) => {
           <h3 className="font-bold text-slate-800">
             {isReceiving ? 'Receiving Log' : 'Raw Intact Monitoring'}
           </h3>
+          {record.escalation?.isEscalated && (
+            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-black uppercase">
+              Escalated
+            </span>
+          )}
         </div>
         <button 
           onClick={() => onPrint(record.id)}
@@ -49,7 +54,8 @@ export const RecordCard: React.FC<Props> = ({ record, onPrint }) => {
 
       {hasViolation && r.correctiveAction && (
         <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded text-xs text-red-800">
-          <p className="font-bold">Corrective Action Taken:</p>
+          {/* Plain-language UI adjustment */}
+          <p className="font-bold">Action Taken:</p>
           <p>{r.correctiveAction}</p>
         </div>
       )}

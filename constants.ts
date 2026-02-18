@@ -35,7 +35,7 @@ CORE RULES:
 `;
 
 export const APP_MODELS = {
-  CHAT: 'gemini-3-flash-preview',
-  ANALYSIS: 'gemini-3-pro-preview',
-  NR_TOOL: 'gemini-3-pro-preview'
+  CHAT: 'gemini-2.5-flash',
+  ANALYSIS: 'gemini-2.5-flash',
+  NR_TOOL: 'gemini-2.5-flash'
 };
