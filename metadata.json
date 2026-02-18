@@ -1,0 +1,5 @@
+{
+  "name": "USDA HACCP Compliance Assistant",
+  "description": "An AI-powered assistant for USDA-certified meat facilities to automate Receiving Logs and Raw Intact HACCP Monitoring with strict regulatory validation.",
+  "requestFramePermissions": []
+}
