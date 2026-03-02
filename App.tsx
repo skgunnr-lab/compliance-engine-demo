@@ -539,7 +539,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center shadow-md no-print">
+        <div className="sticky top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center shadow-md no-print">
           <p className="text-sm font-bold">
             ⚠️ DEMONSTRATION MODE: This is a simulated AI-assisted compliance workflow prototype for demonstration purposes only
           </p>
