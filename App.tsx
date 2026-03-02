@@ -520,33 +520,34 @@ const App: React.FC = () => {
       </nav>
 
       <main className="flex-1 flex flex-col h-screen relative no-print overflow-hidden">
-        <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center shadow-sm z-10">
-          <div>
-            <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 tracking-tighter uppercase">
-              <ClipboardCheck className="text-emerald-600" />
-              Carnivore House Compliance Engine
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">USDA HACCP Framework</span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-black">EST. #DEMO-001</span>
+        <header className="flex flex-col z-10 shadow-sm">
+          <div className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 flex items-center gap-2 tracking-tighter uppercase">
+                <ClipboardCheck className="text-emerald-600" />
+                Carnivore House Compliance Engine
+              </h1>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">USDA HACCP Framework</span>
+                <span className="text-[9px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-black">EST. #DEMO-001</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 uppercase">
+                <BookOpen size={14} className="text-slate-400" />
+                USDA CFR Reference Active
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 uppercase">
-              <BookOpen size={14} className="text-slate-400" />
-              USDA CFR Reference Active
-            </div>
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center no-print">
+            <p className="text-sm font-bold">
+              ⚠️ DEMONSTRATION MODE: This is a simulated AI-assisted compliance workflow prototype for demonstration purposes only
+            </p>
+            <p className="text-xs opacity-90 mt-1">
+              All AI responses are mock implementations. No backend services or API keys required.
+            </p>
           </div>
         </header>
-
-        <div className="sticky top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center shadow-md no-print">
-          <p className="text-sm font-bold">
-            ⚠️ DEMONSTRATION MODE: This is a simulated AI-assisted compliance workflow prototype for demonstration purposes only
-          </p>
-          <p className="text-xs opacity-90 mt-1">
-            All AI responses are mock implementations. No backend services or API keys required.
-          </p>
-        </div>
 
         <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
           <div className="max-w-4xl mx-auto h-full">
