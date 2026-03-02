@@ -505,7 +505,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 font-sans">
-      <nav className="w-full md:w-20 bg-slate-950 flex md:flex-col items-center py-4 px-2 md:py-8 justify-around md:justify-start gap-6 no-print sticky top-0 md:h-screen z-50">
+      <nav className="fixed bottom-0 left-0 right-0 md:sticky md:top-0 md:bottom-auto md:left-auto md:right-auto w-full md:w-20 bg-slate-950 flex md:flex-col items-center py-2 px-4 md:py-8 justify-around md:justify-start md:gap-6 no-print md:h-screen z-50">
         <div className="hidden md:block mb-8">
           <Beef className="text-emerald-400 w-10 h-10" />
         </div>
@@ -537,7 +537,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50">
+        <div className="flex-1 overflow-y-auto bg-slate-50 pb-16 md:pb-0">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center no-print">
             <p className="text-sm font-bold">
               ⚠️ DEMONSTRATION MODE: This is a simulated AI-assisted compliance workflow prototype for demonstration purposes only
