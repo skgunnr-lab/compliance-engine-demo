@@ -8,7 +8,6 @@ import {
   Send,
   Mic,
   Loader2,
-  Settings,
   Printer,
   BookOpen,
   FileWarning,
@@ -516,7 +515,6 @@ const App: React.FC = () => {
         <button onClick={() => setActiveTab('nr-responder')} className={`p-3 rounded-xl transition ${activeTab === 'nr-responder' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><FileWarning size={24} /></button>
         <button onClick={() => setActiveTab('history')} className={`p-3 rounded-xl transition ${activeTab === 'history' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><History size={24} /></button>
         <button onClick={() => setActiveTab('dashboard')} className={`p-3 rounded-xl transition ${activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><LayoutDashboard size={24} /></button>
-        <div className="md:mt-auto"><button className="p-3 text-slate-500 hover:text-white"><Settings size={24} /></button></div>
       </nav>
 
       <main className="flex-1 flex flex-col h-screen relative no-print overflow-hidden">
