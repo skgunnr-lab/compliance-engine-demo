@@ -527,14 +527,14 @@ const App: React.FC = () => {
               Carnivore House Compliance Engine
             </h1>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">HACCP Reference V1.0</span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-black">EST. MEAT-PRO-123</span>
+              <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">USDA HACCP Framework</span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-black">EST. #DEMO-001</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 uppercase">
               <BookOpen size={14} className="text-slate-400" />
-              Reference Checks On
+              USDA CFR Reference Active
             </div>
           </div>
         </header>
@@ -567,9 +567,10 @@ const App: React.FC = () => {
                       </h1>
                     </div>
                     <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mb-6">
-                      An AI-powered regulatory compliance assistant designed specifically for meat processing facilities.
-                      Streamline HACCP documentation, analyze noncompliance records, and maintain full regulatory adherence
-                      with intelligent automation.
+                      An AI-powered regulatory compliance assistant built for <strong>Carnivore House</strong>, a USDA-regulated meat processing facility.
+                      This is the public demo version of a full production system — the internal version features live AI responses, Firebase cloud storage, and real-time multi-user sync.
+                      This demo showcases the core workflow: conversational HACCP form filling, voice dictation, noncompliance record analysis, and a compliance trend dashboard.
+                      <span className="block mt-2 text-emerald-300 text-base font-semibold">⚠️ All AI responses in this demo are simulated.</span>
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <div className="bg-blue-600/80 px-4 py-2 rounded-lg border border-blue-500">
