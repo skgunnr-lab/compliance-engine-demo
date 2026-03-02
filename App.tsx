@@ -13,20 +13,25 @@ import {
   BookOpen,
   FileWarning,
   Calculator,
-  Gavel
+  Gavel,
+  Home,
+  Sparkles,
+  ArrowRight,
+  Beef
 } from 'lucide-react';
 import { HACCPRecord, ChatMessage, NRExtraction, NRResponseDraft } from './types';
 import { processComplianceChat, analyzeComplianceTrends, analyzeNR } from './services/geminiService';
 import { RecordCard } from './components/RecordCard';
+import { presetQuestions, getCategoryLabel, getCategoryColor, type PresetQA } from './presetQA';
 import { PrintableForm } from './components/PrintableForm';
 
-type Tab = 'general-chat' | 'document-filler' | 'nr-responder' | 'history' | 'dashboard';
+type Tab = 'home' | 'general-chat' | 'document-filler' | 'nr-responder' | 'history' | 'dashboard';
 type FormSelection = 'RAW_INTACT_MONITORING' | 'RECEIVING_LOG';
 type FormFieldDef = { key: string; label: string };
 type FormState = Partial<HACCPRecord>;
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('general-chat');
+  const [activeTab, setActiveTab] = useState<Tab>('home');
   const [records, setRecords] = useState<HACCPRecord[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [currentInput, setCurrentInput] = useState('');
@@ -42,9 +47,6 @@ const App: React.FC = () => {
   const [currentFormState, setCurrentFormState] = useState<Partial<HACCPRecord> | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [isEscalated, setIsEscalated] = useState(false);
-  const [escalationReason, setEscalationReason] = useState('');
-  const [escalationUserRole, setEscalationUserRole] = useState<'Monitor' | 'Supervisor' | 'QA Manager'>('Monitor');
   const [nrInput, setNrInput] = useState('');
   const [nrResult, setNrResult] = useState<{ extraction: NRExtraction, responseDraft: NRResponseDraft } | null>(null);
   const [nrCount, setNrCount] = useState(0);
@@ -224,9 +226,6 @@ const App: React.FC = () => {
     setWorkflowStage('collecting');
     setCurrentFieldIndex(startIndex);
     setMissingFields(fields.map(field => field.key));
-    setIsEscalated(false);
-    setEscalationReason('');
-    setEscalationUserRole('Monitor');
     setFillerHistory([
       { role: 'assistant', content: `Starting ${formType === 'RAW_INTACT_MONITORING' ? 'HACCP Monitoring Log (Raw Intact Form)' : 'Receiving Log'}.` },
       { role: 'assistant', content: firstQuestion }
@@ -242,7 +241,7 @@ const App: React.FC = () => {
 
     setChatHistory([{
       role: 'assistant',
-      content: 'Carnivore House Regulatory Terminal active. Operating under Reference Manual V1.0. All responses cited according to Title 9 of the Code of Federal Regulations (CFR). How can I assist the Establishment today?'
+      content: 'Welcome to the Compliance Assistant demo! 👋\n\nI\'m here to help answer questions about this workflow system. Click any question from the guide on the right to see detailed answers, or type your own question!\n\n💡 Tip: In the full version, this would be powered by AI to answer any compliance-related question in real-time.'
     }]);
 
     startFormWorkflow('RAW_INTACT_MONITORING');
@@ -313,6 +312,14 @@ const App: React.FC = () => {
     });
   };
 
+  const handlePresetQuestion = (qa: PresetQA) => {
+    setChatHistory(prev => [
+      ...prev,
+      { role: 'user', content: qa.question },
+      { role: 'assistant', content: qa.answer }
+    ]);
+  };
+
   const handleGeneralChatMessage = async () => {
     if (!currentInput.trim() || isLoading) return;
 
@@ -321,14 +328,25 @@ const App: React.FC = () => {
     setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsLoading(true);
 
-    try {
-      const result = await processComplianceChat(userMsg, chatHistory.map(h => ({ role: h.role, content: h.content })), null);
-      setChatHistory(prev => [...prev, { role: 'assistant', content: result.assistantMessage }]);
-    } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', content: 'We could not complete that step. Please review the details and try again.' }]);
-    } finally {
-      setIsLoading(false);
+    // Simulate thinking delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Try to find a matching preset question
+    const matchedQA = presetQuestions.find(qa =>
+      qa.question.toLowerCase().includes(userMsg.toLowerCase()) ||
+      userMsg.toLowerCase().includes(qa.question.toLowerCase().split(' ').slice(0, 3).join(' '))
+    );
+
+    if (matchedQA) {
+      setChatHistory(prev => [...prev, { role: 'assistant', content: matchedQA.answer }]);
+    } else {
+      setChatHistory(prev => [...prev, {
+        role: 'assistant',
+        content: 'I\'m a demo assistant with preset responses. Try clicking one of the example questions on the right, or explore the other tabs to see the workflow system in action!\n\n💡 In the full version, I would use AI to answer any question about compliance, regulations, and documentation procedures.'
+      }]);
     }
+
+    setIsLoading(false);
   };
 
   const submitDocumentFillerMessage = async (userMsg: string) => {
@@ -463,73 +481,12 @@ const App: React.FC = () => {
     setMissingFields([]);
     setCurrentFieldIndex(0);
     setWorkflowStage('collecting');
-    setIsEscalated(false);
-    setEscalationReason('');
-    setEscalationUserRole('Monitor');
     setFillerHistory(prev => [...prev, {
       role: 'assistant',
       content: `Saved.\n\n[OFFICIAL RECORD GENERATED: ${newRecord.id}]`,
       data: newRecord,
       recordId: newRecord.id
     } as any]);
-  };
-
-  // Escalation compliance workflow
-  const canFinalizeEscalatedRecord = (formState: Partial<HACCPRecord>) => {
-    const isRawIntact = formState.type === 'RAW_INTACT_MONITORING';
-    const temperature = typeof (formState as any).temperature === 'number' ? Number((formState as any).temperature) : null;
-    const overCriticalLimit = isRawIntact && temperature !== null && temperature > 45;
-    if (!overCriticalLimit) return true;
-
-    const correctiveAction = String((formState as any).correctiveAction || '').trim();
-    const dispositionOfProduct = String((formState as any).dispositionOfProduct || '').trim();
-    return correctiveAction.length > 0 && dispositionOfProduct.length > 0;
-  };
-
-  // Escalation compliance workflow
-  const finalizeEscalatedRecord = () => {
-    if (!currentFormState || !isEscalated) return;
-    if (!escalationReason.trim()) {
-      setFillerHistory(prev => [...prev, { role: 'assistant', content: 'Escalation reason is required before finalizing this record.' }]);
-      return;
-    }
-    if (!canFinalizeEscalatedRecord(currentFormState)) {
-      setFillerHistory(prev => [...prev, {
-        role: 'assistant',
-        content: 'Temperature went over the allowed limit. Add corrective action and product disposition before this record can move forward.'
-      }]);
-      return;
-    }
-
-    const escalationTimestamp = Date.now();
-    const newRecord: HACCPRecord = {
-      ...currentFormState,
-      id: 'EST-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-      timestamp: escalationTimestamp,
-      escalation: {
-        isEscalated: true,
-        reason: escalationReason.trim(),
-        timestamp: escalationTimestamp,
-        userRole: escalationUserRole,
-        missingFields: missingFields.length > 0 ? missingFields : ['Not specified by model']
-      }
-    } as HACCPRecord;
-
-    setRecords(prev => [newRecord, ...prev]);
-    setCurrentFormState(null);
-    setMissingFields([]);
-    setCurrentFieldIndex(0);
-    setWorkflowStage('collecting');
-    setIsEscalated(false);
-    setEscalationReason('');
-    setEscalationUserRole('Monitor');
-    setFillerHistory(prev => [...prev, {
-      role: 'assistant',
-      content: `Escalated record created. Missing fields documented for supervisor review.\n\n[OFFICIAL RECORD GENERATED: ${newRecord.id}]`,
-      data: newRecord,
-      recordId: newRecord.id
-    } as any]);
-    handlePrint(newRecord.id);
   };
 
   const runNRAnalysis = async () => {
@@ -545,15 +502,15 @@ const App: React.FC = () => {
     }
   };
 
-  const totalEscalated = records.filter(record => record.escalation?.isEscalated).length;
   const totalDeviations = records.filter(record => record.type === 'RAW_INTACT_MONITORING' && (record as any).temperature > 45).length;
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 font-sans">
       <nav className="w-full md:w-20 bg-slate-950 flex md:flex-col items-center py-4 px-2 md:py-8 justify-around md:justify-start gap-6 no-print sticky top-0 md:h-screen z-50">
         <div className="hidden md:block mb-8">
-          <ShieldCheck className="text-emerald-400 w-10 h-10" />
+          <Beef className="text-emerald-400 w-10 h-10" />
         </div>
+        <button onClick={() => setActiveTab('home')} className={`p-3 rounded-xl transition ${activeTab === 'home' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`} title="Home"><Home size={24} /></button>
         <button onClick={() => setActiveTab('general-chat')} className={`p-3 rounded-xl transition ${activeTab === 'general-chat' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><MessageSquare size={24} /></button>
         <button onClick={() => setActiveTab('document-filler')} className={`p-3 rounded-xl transition ${activeTab === 'document-filler' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><ClipboardCheck size={24} /></button>
         <button onClick={() => setActiveTab('nr-responder')} className={`p-3 rounded-xl transition ${activeTab === 'nr-responder' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><FileWarning size={24} /></button>
@@ -582,34 +539,232 @@ const App: React.FC = () => {
           </div>
         </header>
 
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 text-center shadow-md no-print">
+          <p className="text-sm font-bold">
+            ⚠️ DEMONSTRATION MODE: This is a simulated AI-assisted compliance workflow prototype for demonstration purposes only
+          </p>
+          <p className="text-xs opacity-90 mt-1">
+            All AI responses are mock implementations. No backend services or API keys required.
+          </p>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
           <div className="max-w-4xl mx-auto h-full">
+            {activeTab === 'home' && (
+              <div className="space-y-8 animate-in fade-in duration-700 pb-12">
+                {/* Hero Section */}
+                <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 p-8 md:p-12 rounded-3xl shadow-2xl border border-emerald-900 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 opacity-5">
+                    <ShieldCheck size={300} />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-emerald-500/20 p-3 rounded-xl border border-emerald-500/40">
+                        <Sparkles className="text-emerald-400" size={32} />
+                      </div>
+                      <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
+                        Compliance Engine
+                      </h1>
+                    </div>
+                    <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mb-6">
+                      An AI-powered regulatory compliance assistant designed specifically for meat processing facilities.
+                      Streamline HACCP documentation, analyze noncompliance records, and maintain full regulatory adherence
+                      with intelligent automation.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="bg-blue-600/80 px-4 py-2 rounded-lg border border-blue-500">
+                        <p className="text-white text-sm font-black uppercase">⚠️ Demo Mode - Mock Responses</p>
+                      </div>
+                      <div className="bg-emerald-900/50 px-4 py-2 rounded-lg border border-emerald-700/50">
+                        <p className="text-emerald-300 text-sm font-black uppercase">HACCP Reference V1.0</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Cards */}
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-6 flex items-center gap-2">
+                    <Home size={28} className="text-emerald-600" />
+                    Navigate to a Feature
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* General Chat */}
+                    <button
+                      onClick={() => setActiveTab('general-chat')}
+                      className="group bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-200 hover:border-emerald-600 hover:shadow-xl transition-all duration-300 text-left"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="bg-emerald-100 p-3 rounded-xl group-hover:bg-emerald-600 transition-colors">
+                          <MessageSquare className="text-emerald-600 group-hover:text-white transition-colors" size={28} />
+                        </div>
+                        <ArrowRight className="text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" size={24} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase mb-2">General Chatbot</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        Ask compliance questions and get answers from preset Q&A guide.
+                        Includes workflow tips, feature explanations, and documentation guidance.
+                      </p>
+                    </button>
+
+                    {/* Document Filler */}
+                    <button
+                      onClick={() => setActiveTab('document-filler')}
+                      className="group bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-200 hover:border-emerald-600 hover:shadow-xl transition-all duration-300 text-left"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="bg-blue-100 p-3 rounded-xl group-hover:bg-blue-600 transition-colors">
+                          <ClipboardCheck className="text-blue-600 group-hover:text-white transition-colors" size={28} />
+                        </div>
+                        <ArrowRight className="text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" size={24} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase mb-2">Document Filler</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        Fill out HACCP monitoring logs and receiving logs conversationally using chat or voice input.
+                        Simulated AI-guided workflow for demonstration.
+                      </p>
+                    </button>
+
+                    {/* NR Responder */}
+                    <button
+                      onClick={() => setActiveTab('nr-responder')}
+                      className="group bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-200 hover:border-red-600 hover:shadow-xl transition-all duration-300 text-left"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="bg-red-100 p-3 rounded-xl group-hover:bg-red-600 transition-colors">
+                          <FileWarning className="text-red-600 group-hover:text-white transition-colors" size={28} />
+                        </div>
+                        <ArrowRight className="text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" size={24} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase mb-2">NR Responder</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        Analyze USDA noncompliance records and generate structured establishment management responses.
+                        Mock structured extraction for demonstration purposes.
+                      </p>
+                    </button>
+
+                    {/* Document Archive */}
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      className="group bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-200 hover:border-purple-600 hover:shadow-xl transition-all duration-300 text-left"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="bg-purple-100 p-3 rounded-xl group-hover:bg-purple-600 transition-colors">
+                          <History className="text-purple-600 group-hover:text-white transition-colors" size={28} />
+                        </div>
+                        <ArrowRight className="text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" size={24} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase mb-2">Document Archive</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        Access all completed forms organized by type. View and print records.
+                        Data stored in browser localStorage.
+                      </p>
+                    </button>
+
+                    {/* Dashboard */}
+                    <button
+                      onClick={() => setActiveTab('dashboard')}
+                      className="group bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-200 hover:border-indigo-600 hover:shadow-xl transition-all duration-300 text-left md:col-span-2"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="bg-indigo-100 p-3 rounded-xl group-hover:bg-indigo-600 transition-colors">
+                          <LayoutDashboard className="text-indigo-600 group-hover:text-white transition-colors" size={28} />
+                        </div>
+                        <ArrowRight className="text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" size={24} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 uppercase mb-2">Analytics Dashboard</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        View compliance metrics including total forms completed, deviations, and noncompliance records.
+                        Mock analytics with simulated risk indicators.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">System Overview</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-3xl font-black text-emerald-600">{records.length}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase mt-1">Forms Completed</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-black text-red-600">{totalDeviations}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase mt-1">Deviations</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-black text-indigo-600">{nrCount}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase mt-1">NR Responses</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'general-chat' && (
-              <div className="flex flex-col h-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {chatHistory.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border ${msg.role === 'user' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-800 border-slate-200'}`}>
-                        <div className="flex items-start gap-3">
-                          {msg.role === 'assistant' && <ShieldCheck className="text-emerald-600 shrink-0 mt-1" size={18} />}
-                          <div className="w-full">
-                            <div className="text-sm whitespace-pre-wrap leading-relaxed font-medium">
-                              {msg.content.split(/(\[.*?\])/).map((part, idx) =>
-                                part.startsWith('[') && part.endsWith(']') ? <span key={idx} className="bg-emerald-50 text-emerald-700 px-1 rounded font-bold text-[11px] border border-emerald-100 mx-0.5">{part}</span> : part
-                              )}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+                {/* Chat Interface */}
+                <div className="lg:col-span-2 flex flex-col h-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {chatHistory.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border ${msg.role === 'user' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-800 border-slate-200'}`}>
+                          <div className="flex items-start gap-3">
+                            {msg.role === 'assistant' && <MessageSquare className="text-blue-600 shrink-0 mt-1" size={18} />}
+                            <div className="w-full">
+                              <div className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{msg.content}</div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    ))}
+                    {isLoading && <div className="bg-blue-50 rounded-2xl p-4 flex items-center gap-3 w-fit border border-blue-100"><Loader2 className="w-4 h-4 animate-spin text-blue-600" /><span className="text-xs text-blue-800 font-black uppercase tracking-widest">Thinking...</span></div>}
+                    <div ref={chatEndRef} />
+                  </div>
+                  <div className="p-4 border-t border-slate-200 bg-white">
+                    <div className="flex gap-2">
+                      <input id="general-chat-input" name="generalChatInput" type="text" value={currentInput} onChange={(e) => setCurrentInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleGeneralChatMessage()} placeholder="Ask a question or click an example →" className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition" />
+                      <button onClick={handleGeneralChatMessage} className="bg-slate-900 text-white rounded-xl px-5 py-3 hover:bg-black transition"><Send size={20} /></button>
                     </div>
-                  ))}
-                  {isLoading && <div className="bg-emerald-50 rounded-2xl p-4 flex items-center gap-3 w-fit border border-emerald-100"><Loader2 className="w-4 h-4 animate-spin text-emerald-600" /><span className="text-xs text-emerald-800 font-black uppercase tracking-widest">Processing...</span></div>}
-                  <div ref={chatEndRef} />
+                  </div>
                 </div>
-                <div className="p-4 border-t border-slate-200 bg-white">
-                  <div className="flex gap-2">
-                    <input id="general-chat-input" name="generalChatInput" type="text" value={currentInput} onChange={(e) => setCurrentInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleGeneralChatMessage()} placeholder="Ask a compliance question..." className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 transition" />
-                    <button onClick={handleGeneralChatMessage} className="bg-slate-900 text-white rounded-xl px-5 py-3 hover:bg-black transition"><Send size={20} /></button>
+
+                {/* Question Guide Sidebar */}
+                <div className="flex flex-col bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                  <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                    <h3 className="text-sm font-black text-slate-900 uppercase">Example Questions</h3>
+                    <p className="text-xs text-slate-600 mt-1">Click any question to see the answer</p>
+                  </div>
+
+                  {/* Demo Notice */}
+                  <div className="p-3 bg-amber-50 border-b border-amber-200">
+                    <div className="flex items-start gap-2">
+                      <div className="text-amber-600 shrink-0 mt-0.5">ℹ️</div>
+                      <p className="text-xs text-amber-800 leading-relaxed">
+                        <strong>Demo Mode:</strong> This assistant uses preset Q&A responses. The full production version features AI-powered chat that can answer any compliance question in real-time with regulatory citations.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {presetQuestions.map((qa) => (
+                      <button
+                        key={qa.id}
+                        onClick={() => handlePresetQuestion(qa)}
+                        className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition group"
+                      >
+                        <div className="flex items-start gap-2">
+                          <MessageSquare size={14} className="text-slate-400 group-hover:text-blue-600 shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700 line-clamp-2">{qa.question}</p>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full mt-1.5 inline-block font-bold ${getCategoryColor(qa.category)}`}>
+                              {getCategoryLabel(qa.category)}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -663,69 +818,11 @@ const App: React.FC = () => {
 
                     {isLoading && <div className="bg-emerald-50 rounded-2xl p-4 flex items-center gap-3 w-fit border border-emerald-100"><Loader2 className="w-4 h-4 animate-spin text-emerald-600" /><span className="text-xs text-emerald-800 font-black uppercase tracking-widest">Processing...</span></div>}
 
-                    {(currentFormState && (missingFields.length > 0 || isEscalated)) && (
-                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
-                        {missingFields.length > 0 && <p className="text-sm font-bold text-amber-900">Guided mode is active. Answer the current question to continue.</p>}
-                        {!isEscalated ? (
-                          <button
-                            onClick={() => setIsEscalated(true)}
-                            className="bg-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-800 transition"
-                          >
-                            Escalate to Supervisor
-                          </button>
-                        ) : (
-                          <div className="space-y-3">
-                            {/* Escalation compliance workflow */}
-                            <label className="block">
-                              <span className="text-[11px] font-black uppercase text-amber-900">Escalation Reason (Required)</span>
-                              <textarea
-                                value={escalationReason}
-                                onChange={(e) => setEscalationReason(e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-amber-300 bg-white p-2 text-sm"
-                                placeholder="Explain why required documentation is unavailable."
-                              />
-                            </label>
-                            <label className="block">
-                              <span className="text-[11px] font-black uppercase text-amber-900">User Role</span>
-                              <select
-                                value={escalationUserRole}
-                                onChange={(e) => setEscalationUserRole(e.target.value as 'Monitor' | 'Supervisor' | 'QA Manager')}
-                                className="mt-1 w-full rounded-lg border border-amber-300 bg-white p-2 text-sm"
-                              >
-                                <option value="Monitor">Monitor</option>
-                                <option value="Supervisor">Supervisor</option>
-                                <option value="QA Manager">QA Manager</option>
-                              </select>
-                            </label>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={finalizeEscalatedRecord}
-                                disabled={!escalationReason.trim()}
-                                className="bg-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-800 transition disabled:opacity-50"
-                              >
-                                Escalate & Print
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setIsEscalated(false);
-                                  setEscalationReason('');
-                                }}
-                                className="bg-white text-amber-800 border border-amber-300 px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-100 transition"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
                     {workflowStage === 'review' && currentFormState && (
                       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3">
                         <p className="text-sm font-bold text-emerald-900">Review ready. Choose next step:</p>
                         <div className="flex flex-wrap gap-2">
                           <button onClick={() => saveCurrentFormRecord(true)} className="bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-800 transition">Generate printable document</button>
-                          <button onClick={() => setIsEscalated(true)} className="bg-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-800 transition">Escalate</button>
                           <button onClick={() => saveCurrentFormRecord(false)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition">Save record</button>
                         </div>
                       </div>
@@ -900,9 +997,8 @@ const App: React.FC = () => {
 
             {activeTab === 'dashboard' && (
               <div className="space-y-6 pb-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">Total Forms Completed</p><p className="text-4xl font-black text-slate-900 tracking-tighter">{records.length}</p></div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><p className="text-amber-600 text-[10px] font-black uppercase mb-1 tracking-widest">Total Escalated</p><p className="text-4xl font-black text-amber-700 tracking-tighter">{totalEscalated}</p></div>
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><p className="text-red-500 text-[10px] font-black uppercase mb-1 tracking-widest">Total Deviations</p><p className="text-4xl font-black text-red-600 tracking-tighter">{totalDeviations}</p></div>
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><p className="text-indigo-500 text-[10px] font-black uppercase mb-1 tracking-widest">Total Noncompliance Records</p><p className="text-4xl font-black text-indigo-700 tracking-tighter">{nrCount}</p></div>
                 </div>

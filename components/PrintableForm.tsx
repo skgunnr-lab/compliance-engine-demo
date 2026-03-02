@@ -59,17 +59,12 @@ export const PrintableForm: React.FC<Props> = ({ record }) => {
         <h2 className="text-center text-lg font-bold underline py-1">
           {isReceiving ? 'RECEIVING LOG: RAW MATERIALS & INGREDIENTS' : 'RAW INTACT MONITORING LOG (CCP IB)'}
         </h2>
-        {rec.escalation?.isEscalated && (
-          <div className="mt-2 bg-red-100 border border-red-500 text-red-900 text-center py-1 font-black tracking-wide">
-            ESCALATED RECORD
-          </div>
-        )}
       </div>
 
       {/* Main Data Grid */}
       <div className="border-t border-l border-black">
         {Object.entries(record).map(([key, value]) => {
-          if (['id', 'timestamp', 'type', 'escalation'].includes(key)) return null;
+          if (['id', 'timestamp', 'type'].includes(key)) return null;
           const label = labelMap[key] || key;
           
           let displayValue = String(value || 'N/A');
@@ -88,27 +83,6 @@ export const PrintableForm: React.FC<Props> = ({ record }) => {
           );
         })}
       </div>
-
-      {rec.escalation?.isEscalated && (
-        <div className="mt-4 border-2 border-red-500">
-          <div className="bg-red-600 text-white p-1 text-center font-bold text-[9pt] uppercase">
-            Escalation Details
-          </div>
-          <div className="p-3 text-[9pt] space-y-2">
-            <p><span className="font-bold">Reason:</span> {rec.escalation.reason}</p>
-            <p><span className="font-bold">User Role:</span> {rec.escalation.userRole}</p>
-            <p><span className="font-bold">Escalation Time:</span> {new Date(rec.escalation.timestamp).toLocaleString()}</p>
-            <div>
-              <p className="font-bold">Missing Fields:</p>
-              <ul className="list-disc ml-6">
-                {(rec.escalation.missingFields || []).map((field: string, idx: number) => (
-                  <li key={`${field}-${idx}`}>{field}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Plain-language UI adjustment */}
       {/* Critical temperature section (Always shown for Raw Intact Monitoring) */}

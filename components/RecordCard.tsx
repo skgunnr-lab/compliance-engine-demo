@@ -26,11 +26,6 @@ export const RecordCard: React.FC<Props> = ({ record, onPrint }) => {
           <h3 className="font-bold text-slate-800">
             {isReceiving ? 'Receiving Log' : 'Raw Intact Monitoring'}
           </h3>
-          {record.escalation?.isEscalated && (
-            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-black uppercase">
-              Escalated
-            </span>
-          )}
         </div>
         <button 
           onClick={() => onPrint(record.id)}
