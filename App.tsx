@@ -566,8 +566,8 @@ const App: React.FC = () => {
                     </div>
                     <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mb-6">
                       An AI-powered regulatory compliance assistant built for <strong>Carnivore House</strong>, a USDA-regulated meat processing facility.
-                      This is the public demo version of a full production system — the internal version features live AI responses, Firebase cloud storage, and real-time multi-user sync.
-                      This demo showcases the core workflow: conversational HACCP form filling, voice dictation, noncompliance record analysis, and a compliance trend dashboard.
+                      This is the public demo version of a full production system — the internal version features live AI responses grounded in the full 9 CFR Parts 301–417, FSIS Directives 5000.1 and 5000.6, Firebase cloud storage, and real-time multi-user sync.
+                      This demo showcases the core workflow: conversational HACCP form filling, continuous voice dictation, noncompliance record analysis, and a compliance trend dashboard.
                       <span className="block mt-2 text-emerald-300 text-base font-semibold">⚠️ All AI responses in this demo are simulated.</span>
                     </p>
                     <div className="flex flex-wrap gap-3">
@@ -575,7 +575,7 @@ const App: React.FC = () => {
                         <p className="text-white text-sm font-black uppercase">⚠️ Demo Mode - Mock Responses</p>
                       </div>
                       <div className="bg-emerald-900/50 px-4 py-2 rounded-lg border border-emerald-700/50">
-                        <p className="text-emerald-300 text-sm font-black uppercase">HACCP Reference V1.0</p>
+                        <p className="text-emerald-300 text-sm font-black uppercase">HACCP Reference V1.1</p>
                       </div>
                     </div>
                   </div>

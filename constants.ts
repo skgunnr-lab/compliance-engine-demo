@@ -1,6 +1,6 @@
 
 export const CARNIVORE_HOUSE_MANUAL = `
-Demo Compliance Workflow Reference Manual Version 1.0
+Demo Compliance Workflow Reference Manual Version 1.1
 
 This is demonstration content for showcasing an AI-assisted documentation workflow.
 

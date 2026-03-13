@@ -16,7 +16,7 @@ export const presetQuestions: PresetQA[] = [
     id: '2',
     category: 'features',
     question: 'What is voice dictation?',
-    answer: 'Voice dictation allows you to fill out forms hands-free using speech recognition!\n\n**How to use it:**\n1. Click the microphone icon in the Document Filler\n2. Speak your response clearly\n3. The system extracts field values automatically\n\n**Note**: Voice input requires Chrome, Edge, or another Chromium-based browser.\n\nExample: "Temperature 43, initials JD, lot number ABC123"'
+    answer: 'Voice dictation allows you to fill out forms hands-free using continuous speech recognition!\n\n**How to use it:**\n1. Click the microphone icon in the Document Filler\n2. Speak naturally across multiple fields — the mic stays open\n3. Interim results appear in grey as you speak, then auto-submit when you pause\n4. Click **Stop listening** when you\'re done\n\n**Note**: Voice input requires Chrome, Edge, or another Chromium-based browser.\n\nExample: "Temperature 43, initials JD, lot number ABC123" — each phrase is captured and submitted automatically.'
   },
   {
     id: '3',
@@ -46,7 +46,7 @@ export const presetQuestions: PresetQA[] = [
     id: '7',
     category: 'features',
     question: 'What is the NR Responder?',
-    answer: 'The **NR Responder** (Noncompliance Record Responder) helps analyze and respond to compliance issues.\n\n**How it works:**\n1. Paste a noncompliance scenario description\n2. The system analyzes and extracts key information\n3. Generates a structured response draft\n\n**Output includes:**\n• Regulation citations\n• Critical limit analysis\n• Corrective action recommendations\n• Product disposition guidance\n\nNote: In this demo, responses are simulated examples.'
+    answer: 'The **NR Responder** (Noncompliance Record Responder) helps analyze and respond to USDA Noncompliance Records.\n\n**How it works:**\n1. Paste a noncompliance scenario description\n2. The system analyzes and extracts key information\n3. Generates a structured response draft\n\n**Output includes:**\n• Exact CFR citation (e.g. 9 CFR 417.3(a))\n• CCP involved and critical limit vs. actual value\n• Deviation calculation with explicit math\n• Five-section response draft: corrective action, product disposition, root cause, preventive measures, verification\n\nIn the full version, responses are grounded in the complete 9 CFR regulatory text and FSIS Directives 5000.1 and 5000.6. In this demo, responses are simulated examples.'
   },
   {
     id: '8',
